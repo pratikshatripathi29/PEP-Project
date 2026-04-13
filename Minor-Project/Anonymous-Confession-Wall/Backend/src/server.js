@@ -4,38 +4,40 @@ import session from "express-session";
 import passport from "passport";
 import cors from "cors";
 import dotenv from "dotenv";
-
+import MongoStore from 'connect-mongo';
 dotenv.config();
-
 import "./config/passport.js";
 
-// Routes
 import authRoutes from "./routes/auth.routes.js";
 import confessionRoutes from "./routes/confession.routes.js";
 import userRoutes from "./routes/user.routes.js";
+
 const app = express();
-app.set('trust proxy', 1)
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true, // allow cookies from frontend
-  }),
-);
+
+app.set('trust proxy', 1);
+
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+}));
 
 app.use(express.json());
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      httpOnly: true,
-    },
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    ttl: 14 * 24 * 60 * 60,
   }),
-);
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    httpOnly: true,
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  }
+}));
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -49,7 +51,7 @@ mongoose
   .then(() => {
     console.log("✅ MongoDB connected");
     app.listen(process.env.PORT, () =>
-      console.log(`🚀 Server running → http://localhost:${process.env.PORT}`),
+      console.log(`🚀 Server running → http://localhost:${process.env.PORT}`)
     );
   })
   .catch((err) => {
