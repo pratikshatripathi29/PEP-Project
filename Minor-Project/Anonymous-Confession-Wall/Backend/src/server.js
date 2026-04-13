@@ -14,7 +14,7 @@ import authRoutes from "./routes/auth.routes.js";
 import confessionRoutes from "./routes/confession.routes.js";
 import userRoutes from "./routes/user.routes.js";
 const app = express();
-
+app.set('trust proxy', 1)
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
